@@ -175,7 +175,19 @@ jobs:
             *)   tag=latest ;;
           esac
           echo "publishing $version with dist-tag $tag"
+          # Skip already-published versions so an interrupted release can
+          # be resumed by re-running: npm never allows publishing over an
+          # existing version, even an identical one.
+          publish() {
+            name=$(tar -xzOf "$1" package/package.json |
+              python3 -c "import json,sys; print(json.load(sys.stdin)['name'])")
+            if npm view "${name}@${version}" version >/dev/null 2>&1; then
+              echo "${name}@${version} already published; skipping"
+            else
+              npm publish "./$1" --access public --tag "$tag"
+            fi
+          }
           for f in dist/prince-pdf-*-"${version}".tgz; do
-            npm publish "./$f" --access public --tag "$tag"
+            publish "$f"
           done
-          npm publish "./dist/prince-pdf-${version}.tgz" --access public --tag "$tag"
+          publish "dist/prince-pdf-${version}.tgz"
