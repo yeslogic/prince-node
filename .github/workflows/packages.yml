@@ -146,10 +146,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # Trusted publishing (OIDC) needs npm >= 11.5.1; Node 24 bundles it.
+      # No registry-url here: setup-node would write an .npmrc _authToken
+      # entry reading the (unset) NODE_AUTH_TOKEN variable, and npm then
+      # sends empty credentials instead of attempting the OIDC exchange.
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-          registry-url: https://registry.npmjs.org
       - name: Check tag matches the package version
         run: |
           version=$(python3 -c "import json; print(json.load(open('versions.json'))['package_version'])")
