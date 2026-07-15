@@ -86,7 +86,9 @@ definitions.
 - `prince.run(args = [], options = {})` — a thin `child_process.spawn()`
   wrapper for raw engine access, returning the `ChildProcess`. It does
   **not** apply the error handling or diagnostic parsing that `convert()`
-  provides.
+  provides. Unlike `spawn()`, `stdio` defaults to `'inherit'` — piped
+  stdio that nobody reads would deadlock the engine on long output; pass
+  `options.stdio` explicitly to capture output.
 - `prince.command(...args)` — the argv array that would be run, for use
   with external process tooling (same caveats as `run()`).
 - `prince.executable()` — path of the bundled engine binary.

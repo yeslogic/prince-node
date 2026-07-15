@@ -35,7 +35,8 @@ export interface ConvertOptions {
   args?: readonly string[];
   /**
    * Called with every parsed engine diagnostic. When omitted, warnings
-   * are printed with console.warn.
+   * are printed with console.warn. If the callback throws, the returned
+   * promise rejects with that error.
    */
   onMessage?: (message: Message) => void;
 }

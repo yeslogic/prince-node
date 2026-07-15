@@ -124,29 +124,55 @@ function _convert(cliArgs, output, stdin, opts) {
     const child = spawn(argv[0], argv.slice(1), {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
+    // Single settlement: a spawn failure emits 'error' and then still
+    // emits 'close'; nothing (including onMessage callbacks) should run
+    // after the promise has settled.
+    let settled = false;
+    const settle = (fn, value) => {
+      if (!settled) {
+        settled = true;
+        fn(value);
+      }
+    };
     const stdout = [];
     const stderrChunks = [];
     child.stdout.on('data', (chunk) => stdout.push(chunk));
     child.stderr.on('data', (chunk) => stderrChunks.push(chunk));
-    child.on('error', reject);
+    child.on('error', (err) => settle(reject, err));
     child.stdin.on('error', () => {}); // engine may exit before reading stdin
     child.on('close', (code) => {
+      if (settled) {
+        return;
+      }
       const stderr = Buffer.concat(stderrChunks).toString('utf8');
       const { messages, final } = parseStructuredLog(stderr);
-      for (const m of messages) {
-        if (opts.onMessage) {
-          opts.onMessage(m);
-        } else if (m.severity === 'wrn') {
-          const where = m.location ? `${m.location}: ` : '';
-          console.warn(`prince: warning: ${where}${m.text}`);
+      try {
+        for (const m of messages) {
+          if (opts.onMessage) {
+            opts.onMessage(m);
+          } else if (m.severity === 'wrn') {
+            const where = m.location ? `${m.location}: ` : '';
+            console.warn(`prince: warning: ${where}${m.text}`);
+          }
         }
+      } catch (err) {
+        // An exception from the caller's onMessage callback rejects the
+        // conversion rather than escaping the event loop.
+        settle(reject, err);
+        return;
       }
       // fin|failure with exit status 0 is not expected, but is treated as
       // failure defensively.
       if (code !== 0 || final === 'failure') {
-        reject(new PrinceError(code == null ? -1 : code, stderr, messages));
+        settle(
+          reject,
+          new PrinceError(code == null ? -1 : code, stderr, messages)
+        );
       } else {
-        resolve(output == null ? Buffer.concat(stdout) : String(output));
+        settle(
+          resolve,
+          output == null ? Buffer.concat(stdout) : String(output)
+        );
       }
     });
     if (stdin != null) {
@@ -171,7 +197,9 @@ function _convert(cliArgs, output, stdin, opts) {
  * options: { args, onMessage } - args is a sequence of individual
  *          command-line argument tokens, e.g. ['--baseurl', 'https://x/'];
  *          not a shell string. onMessage receives each parsed engine
- *          diagnostic; without it, warnings go to console.warn.
+ *          diagnostic; without it, warnings go to console.warn. If
+ *          onMessage throws, the returned promise rejects with that
+ *          error.
  *
  * Resolves with the output path (or the PDF Buffer when output is null).
  * Rejects with PrinceError on failure.
@@ -253,22 +281,30 @@ async function xmlToPdf(xml, output = null, options = {}) {
 function version() {
   return new Promise((resolve, reject) => {
     const child = run(['--version'], { stdio: ['ignore', 'pipe', 'pipe'] });
+    let settled = false;
+    const settle = (fn, value) => {
+      if (!settled) {
+        settled = true;
+        fn(value);
+      }
+    };
     const stdout = [];
     const stderrChunks = [];
     child.stdout.on('data', (chunk) => stdout.push(chunk));
     child.stderr.on('data', (chunk) => stderrChunks.push(chunk));
-    child.on('error', reject);
+    child.on('error', (err) => settle(reject, err));
     child.on('close', (code) => {
       const out = Buffer.concat(stdout).toString('utf8');
       if (code !== 0 || !out.trim()) {
-        reject(
+        settle(
+          reject,
           new PrinceError(
             code == null ? -1 : code,
             Buffer.concat(stderrChunks).toString('utf8')
           )
         );
       } else {
-        resolve(out.split('\n')[0].trim());
+        settle(resolve, out.split('\n')[0].trim());
       }
     });
   });

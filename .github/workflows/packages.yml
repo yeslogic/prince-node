@@ -35,6 +35,10 @@ jobs:
           node --check package/lib/platform.js
           node --check package/bin/prince.js
           node --check tests/smoke.js
+      - name: Type-check the TypeScript declarations
+        run: |
+          npm install --no-save typescript @types/node
+          npx tsc -p tests/tsconfig.json
       - name: Download artifacts from princexml.com, verify checksums, build packages
         run: python scripts/build_packages.py
       - name: Check package contents
