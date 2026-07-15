@@ -1,0 +1,45 @@
+{
+  "name": "prince-pdf",
+  "version": "17.0.0-dev.20260630.0",
+  "description": "Prince: convert HTML with CSS to PDF. Bundles the Prince engine - no separate install required.",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "bin": {
+    "prince": "bin/prince.js"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "files": [
+    "bin",
+    "lib"
+  ],
+  "keywords": [
+    "pdf",
+    "html",
+    "css",
+    "markdown",
+    "prince",
+    "princexml",
+    "paged-media",
+    "pdf-generation"
+  ],
+  "author": "YesLogic Pty Ltd",
+  "homepage": "https://www.princexml.com/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yeslogic/prince-node.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yeslogic/prince-node/issues"
+  },
+  "optionalDependencies": {
+    "@prince-pdf/linux-x64": "17.0.0-dev.20260630.0",
+    "@prince-pdf/linux-arm64": "17.0.0-dev.20260630.0",
+    "@prince-pdf/linux-arm64-musl": "17.0.0-dev.20260630.0",
+    "@prince-pdf/darwin": "17.0.0-dev.20260630.0",
+    "@prince-pdf/win32-x64": "17.0.0-dev.20260630.0",
+    "@prince-pdf/win32-arm64": "17.0.0-dev.20260630.0"
+  }
+}

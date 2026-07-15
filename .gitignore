@@ -1,0 +1,8 @@
+downloads/
+staging/
+dist/
+node_modules/
+package/README.md
+package/LICENSE
+*.tgz
+__pycache__/
