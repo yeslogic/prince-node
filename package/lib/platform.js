@@ -44,7 +44,9 @@ function bundle() {
     throw new Error(
       `prince-pdf has no Prince engine build for this platform (${key}). ` +
       'Supported platforms: Linux x64 (glibc), Linux arm64 (glibc and ' +
-      'musl), macOS, Windows x64 and arm64.'
+      'musl), macOS, Windows x64 and arm64. Alternatively, install Prince ' +
+      'separately (https://www.princexml.com/download/) and set the ' +
+      'PRINCE_PATH environment variable to its prince executable.'
     );
   }
   let dir;
@@ -55,7 +57,9 @@ function bundle() {
       `The Prince engine package ${name} is not installed. It is an ` +
       'optionalDependency of prince-pdf, so it is skipped when npm runs ' +
       'with --omit=optional (or --no-optional); reinstall prince-pdf ' +
-      'with optional dependencies enabled.'
+      'with optional dependencies enabled. Alternatively, set the ' +
+      'PRINCE_PATH environment variable to a separately installed ' +
+      'prince executable.'
     );
   }
   const meta = JSON.parse(

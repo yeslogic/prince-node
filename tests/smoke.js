@@ -96,6 +96,42 @@ async function main() {
       console.log('markdownToPdf: no engine support, guarded correctly');
     }
 
+    if (process.platform !== 'win32') {
+      // A separately installed Prince, emulated by a launcher script of
+      // the same shape system installations use (exec with --prefix).
+      const tmp2 = fs.mkdtempSync(path.join(os.tmpdir(), 'prince-ext-'));
+      try {
+        const engine = prince.executable();
+        const bundleDir = path.dirname(path.dirname(engine));
+        const launcher = path.join(tmp2, 'prince');
+        fs.writeFileSync(
+          launcher,
+          `#!/bin/sh\nexec "${engine}" --prefix="${bundleDir}" "$@"\n`,
+          { mode: 0o755 }
+        );
+        const viaOption = await prince.htmlToPdf(HTML, null, {
+          executable: launcher,
+        });
+        assert(isPdf(viaOption), 'external engine via executable option');
+        process.env.PRINCE_PATH = launcher;
+        try {
+          assert.strictEqual(prince.executable(), launcher);
+          const viaEnv = await prince.version();
+          assert(viaEnv.startsWith('Prince '), `via PRINCE_PATH: ${viaEnv}`);
+        } finally {
+          delete process.env.PRINCE_PATH;
+        }
+        await assert.rejects(
+          prince.htmlToPdf(HTML, null, { executable: tmp2 }),
+          /not a directory/,
+          'directory PRINCE_PATH not rejected'
+        );
+        console.log('external engine (executable option, PRINCE_PATH): ok');
+      } finally {
+        fs.rmSync(tmp2, { recursive: true, force: true });
+      }
+    }
+
     await assert.rejects(
       prince.convert([]),
       (err) =>

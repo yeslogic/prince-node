@@ -39,6 +39,13 @@ export interface ConvertOptions {
    * promise rejects with that error.
    */
   onMessage?: (message: Message) => void;
+  /**
+   * Path to a separately installed prince executable to run instead of
+   * the bundled engine (run without --prefix, so the installation
+   * locates its own resources). Overrides the PRINCE_PATH environment
+   * variable.
+   */
+  executable?: string;
 }
 
 /**
@@ -100,7 +107,11 @@ export function xmlToPdf(
 /** The bundled Prince engine's version string. */
 export function version(): Promise<string>;
 
-/** Path to the bundled Prince engine binary. */
+/**
+ * Path to the Prince engine that will be invoked: the bundled engine,
+ * unless the PRINCE_PATH environment variable selects a separately
+ * installed one.
+ */
 export function executable(): string;
 
 /** The full argv used to invoke the bundled engine with these arguments. */

@@ -26,6 +26,7 @@
 'use strict';
 
 const { spawn } = require('child_process');
+const fs = require('fs');
 const path = require('path');
 const { bundle } = require('./platform');
 
@@ -54,27 +55,64 @@ class PrinceError extends Error {
   }
 }
 
-/** Path to the bundled Prince engine binary. */
-function executable() {
+/**
+ * Resolve which engine to invoke: an explicit executable argument or the
+ * PRINCE_PATH environment variable selects a separately installed Prince
+ * (run without --prefix, so the installation locates its own resources);
+ * otherwise the bundled engine is used.
+ */
+function resolveEngine(override) {
+  const external = override || process.env.PRINCE_PATH;
+  if (external) {
+    let stat = null;
+    try {
+      stat = fs.statSync(external);
+    } catch (e) {
+      throw new Error(`prince executable not found: ${external}`);
+    }
+    if (stat.isDirectory()) {
+      throw new Error(
+        'PRINCE_PATH (or the executable option) must point to the prince ' +
+        `executable, not a directory: ${external}`
+      );
+    }
+    return { program: String(external), prefix: null };
+  }
   const { dir, meta } = bundle();
-  return path.join(dir, ...meta.engine.split('/'));
+  return { program: path.join(dir, ...meta.engine.split('/')), prefix: dir };
+}
+
+function buildCommand(override, args) {
+  const { program, prefix } = resolveEngine(override);
+  const argv = [program];
+  if (prefix) {
+    argv.push(`--prefix=${prefix}`);
+  }
+  if (process.env.PRINCE_LICENSE_FILE) {
+    argv.push(`--license-file=${process.env.PRINCE_LICENSE_FILE}`);
+  }
+  argv.push(...args);
+  return argv;
 }
 
 /**
- * The full argv used to invoke the bundled engine with the given arguments.
+ * Path to the Prince engine that will be invoked: the bundled engine,
+ * unless the PRINCE_PATH environment variable selects a separately
+ * installed one.
+ */
+function executable() {
+  return resolveEngine(null).program;
+}
+
+/**
+ * The full argv used to invoke the engine with the given arguments.
  *
  * If the PRINCE_LICENSE_FILE environment variable is set, the engine is
  * pointed at that license file; this avoids writing into node_modules,
  * which is replaced on every reinstall.
  */
 function command(...args) {
-  const { dir } = bundle();
-  const argv = [executable(), `--prefix=${dir}`];
-  if (process.env.PRINCE_LICENSE_FILE) {
-    argv.push(`--license-file=${process.env.PRINCE_LICENSE_FILE}`);
-  }
-  argv.push(...args);
-  return argv;
+  return buildCommand(null, args);
 }
 
 /**
@@ -115,12 +153,12 @@ function parseStructuredLog(stderr) {
 
 function _convert(cliArgs, output, stdin, opts) {
   return new Promise((resolve, reject) => {
-    const argv = command(
+    const argv = buildCommand(opts.executable, [
       '--structured-log=normal',
       ...cliArgs,
       '-o',
-      output == null ? '-' : String(output)
-    );
+      output == null ? '-' : String(output),
+    ]);
     const child = spawn(argv[0], argv.slice(1), {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -248,17 +286,22 @@ async function htmlToPdf(html, output = null, options = {}) {
  * including 17 pre-release builds). Otherwise identical to htmlToPdf().
  */
 async function markdownToPdf(markdown, output = null, options = {}) {
-  const engine = bundle().meta.prince_version;
-  // Dated pre-release builds (e.g. 20260630) trivially satisfy >= 17.
-  // An unrecognized version scheme skips the guard: the engine decides.
-  const m = /^\d+/.exec(engine);
-  if (m && parseInt(m[0], 10) < 17) {
-    throw new Error(
-      'Markdown input requires Prince 17 or later; this package bundles ' +
-      `Prince ${engine}. Install a 17 build with ` +
-      '`npm install prince-pdf@next`, or convert the Markdown to HTML ' +
-      'and use htmlToPdf().'
-    );
+  // The version guard only knows the bundled engine; with a separately
+  // installed Prince (executable option or PRINCE_PATH), the engine
+  // decides whether it supports Markdown.
+  if (!options.executable && !process.env.PRINCE_PATH) {
+    const engine = bundle().meta.prince_version;
+    // Dated pre-release builds (e.g. 20260630) trivially satisfy >= 17.
+    // An unrecognized version scheme skips the guard: the engine decides.
+    const m = /^\d+/.exec(engine);
+    if (m && parseInt(m[0], 10) < 17) {
+      throw new Error(
+        'Markdown input requires Prince 17 or later; this package bundles ' +
+        `Prince ${engine}. Install a 17 build with ` +
+        '`npm install prince-pdf@next`, or convert the Markdown to HTML ' +
+        'and use htmlToPdf().'
+      );
+    }
   }
   return stringToPdf('markdown', markdown, output, options);
 }

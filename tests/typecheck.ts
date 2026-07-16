@@ -45,8 +45,15 @@ async function options(): Promise<void> {
     },
   });
 
+  // A separately installed engine can be selected per call.
+  await prince.convert('in.html', 'out.pdf', {
+    executable: '/usr/bin/prince',
+  });
+
   // @ts-expect-error args is a token array, never a shell string
   await prince.convert('in.html', 'out.pdf', { args: '--verbose' });
+  // @ts-expect-error executable is a path string
+  await prince.convert('in.html', 'out.pdf', { executable: 42 });
   // @ts-expect-error onMessage receives a Message, not a string
   await prince.htmlToPdf('x', null, { onMessage: (m: string) => m });
   // @ts-expect-error document content must be a string or Buffer

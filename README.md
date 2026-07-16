@@ -60,6 +60,28 @@ location as a base URL:
 await prince.htmlToPdf(html, null, { args: ['--baseurl', '/tmp/report/'] });
 ```
 
+## Using a separately installed Prince
+
+The bundled engine is the default, but the wrapper can drive an existing
+Prince installation instead — a licensed system install, a newer engine,
+or a platform without a bundled build. Set the `PRINCE_PATH` environment
+variable to the installation's `prince` executable (the command you would
+normally run — pointing it at a directory is rejected with an error), or
+select one per call:
+
+```js
+await prince.convert('doc.html', 'doc.pdf', {
+  executable: '/usr/bin/prince',
+});
+```
+
+The per-call `executable` option overrides `PRINCE_PATH`, which overrides
+the bundled engine. External engines run without `--prefix`, so the
+installation locates its own style sheets, fonts, and license; note that
+`markdownToPdf()`'s version check applies only to the bundled engine — a
+separately installed pre-17 Prince reports its own error for Markdown
+input. `PRINCE_LICENSE_FILE` is honored either way.
+
 ## API
 
 All conversion functions return Promises; the package ships TypeScript
@@ -127,7 +149,8 @@ MIT-licensed (`LICENSE`).
   Licensing above.
 - **Engine package not installed**: installing with `--omit=optional`
   (or `--no-optional`) skips the platform-specific engine packages;
-  reinstall without it.
+  reinstall without it, or point `PRINCE_PATH` at a separately installed
+  Prince.
 - **Documents referencing remote resources**: fetching `http(s)` images
   or stylesheets requires network access at conversion time;
   self-contained local files need none.
@@ -140,6 +163,8 @@ Linux x86-64 and ARM64 (glibc), musl/Alpine ARM64, macOS 10.13+
 (universal), Windows x64 and ARM64. On Linux x86-64 the engine
 additionally needs the system fontconfig library — in minimal containers,
 `apt-get install libfontconfig1` (it usually arrives with fonts anyway).
+On other platforms the main package still installs; install Prince
+separately and set `PRINCE_PATH` (see above).
 
 Node.js 14 or later.
 
