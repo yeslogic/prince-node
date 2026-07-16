@@ -151,6 +151,25 @@ async function main() {
       },
       'conversion of a missing file did not fail'
     );
+
+    const seen = [];
+    await assert.rejects(
+      prince.convert('/nonexistent/input.html', null, {
+        onMessage: (m) => seen.push(m),
+      }),
+      (err) => err instanceof prince.PrinceError
+    );
+    assert(seen.length && seen[0].severity === 'err', 'onMessage not called');
+    await assert.rejects(
+      prince.convert('/nonexistent/input.html', null, {
+        onMessage: () => {
+          throw new Error('callback boom');
+        },
+      }),
+      /callback boom/,
+      'onMessage exception did not reject the promise'
+    );
+    console.log('onMessage: diagnostics delivered, exceptions propagate');
   }
 
   console.log('smoke test passed');
