@@ -29,8 +29,10 @@
     "markdown",
     "prince",
     "princexml",
+    "typesetting",
     "paged-media",
-    "pdf-generation"
+    "pdf-generation",
+    "html-to-pdf"
   ],
   "author": "YesLogic Pty Ltd",
   "homepage": "https://www.princexml.com/",

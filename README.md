@@ -113,7 +113,8 @@ definitions.
   `options.stdio` explicitly to capture output.
 - `prince.command(...args)` — the argv array that would be run, for use
   with external process tooling (same caveats as `run()`).
-- `prince.executable()` — path of the bundled engine binary.
+- `prince.executable()` — path of the engine that will be invoked (the
+  bundled engine, unless `PRINCE_PATH` selects another).
 - `prince.version()` — resolves with the engine's version string.
 - `prince.license()` — the default license-file location inside the
   bundle (prefer `PRINCE_LICENSE_FILE`, which survives reinstalls).
@@ -155,7 +156,8 @@ MIT-licensed (`LICENSE`).
   or stylesheets requires network access at conversion time;
   self-contained local files need none.
 - **Diagnosing failures**: `PrinceError.stderr` carries the engine's
-  warnings and errors; add `--verbose` to `args` for more detail.
+  warnings and errors; add `--verbose` (or `--log=FILE`) to `args` for
+  more detail.
 
 ## Supported platforms
 
