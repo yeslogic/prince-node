@@ -8,11 +8,7 @@ launching the engine downloads anything beyond the npm packages themselves.
 references remote resources such as images or stylesheets.)
 
 ```
-# stable Prince release
 npm install prince-pdf
-
-# Prince 17 pre-release, including Markdown input
-npm install prince-pdf@next
 ```
 
 ```js
@@ -22,7 +18,6 @@ await prince.convert('document.html', 'document.pdf');
 
 const htmlPdf = await prince.htmlToPdf('<h1>Hello</h1>');     // in-memory
 
-// requires the Prince 17 pre-release: npm install prince-pdf@next
 const markdownPdf = await prince.markdownToPdf('# Hello');
 ```
 
@@ -77,10 +72,8 @@ await prince.convert('doc.html', 'doc.pdf', {
 
 The per-call `executable` option overrides `PRINCE_PATH`, which overrides
 the bundled engine. External engines run without `--prefix`, so the
-installation locates its own style sheets, fonts, and license; note that
-`markdownToPdf()`'s version check applies only to the bundled engine — a
-separately installed pre-17 Prince reports its own error for Markdown
-input. `PRINCE_LICENSE_FILE` is honored either way.
+installation locates its own style sheets, fonts, and license.
+`PRINCE_LICENSE_FILE` is honored either way.
 
 ## API
 
@@ -97,9 +90,7 @@ definitions.
 - `prince.htmlToPdf(html, output = null, options = {})`,
   `prince.markdownToPdf(markdown, ...)`, `prince.xmlToPdf(xml, ...)` —
   convert a document given as a string or Buffer, without temporary files.
-  Markdown input requires a bundled Prince 17 or later
-  (`npm install prince-pdf@next` while 17 is in pre-release); on older
-  engines `markdownToPdf` rejects with an error saying exactly that.
+  Markdown input requires Prince 17 or later.
 - Failures reject with `PrinceError` carrying `.returncode`, raw
   `.stderr`, and `.messages` — the engine's diagnostics parsed into
   `{ severity, location, text }` objects. During successful conversions,
@@ -168,11 +159,13 @@ additionally needs the system fontconfig library — in minimal containers,
 On other platforms the main package still installs; install Prince
 separately and set `PRINCE_PATH` (see above).
 
-Node.js 14 or later.
+Node.js 22 or later.
 
 ---
 
 Maintainer documentation — how the packages are built, verified, and
-released — is in [RELEASING.md](RELEASING.md). A Python equivalent of this
-package is [available on PyPI](https://pypi.org/project/prince-pdf/) under
-the same name.
+released — is in
+[RELEASING.md](https://github.com/yeslogic/prince-node/blob/main/RELEASING.md).
+A Python equivalent of this package is
+[available on PyPI](https://pypi.org/project/prince-pdf/) under the same
+name.

@@ -6,19 +6,21 @@ SHA-256, converts the Prince version to an npm semver version, and rewrites
 the version and optionalDependencies of the main package.
 
 Usage:
-  python scripts/update_versions.py 16.2                     # stable release
-  python scripts/update_versions.py 17b1                     # beta
-  python scripts/update_versions.py 20260630 --dev-of 17     # dated dev build
-  python scripts/update_versions.py 16.2 --rev 1             # wrapper-only refresh
+  python scripts/update_versions.py 17                       # stable release
+  python scripts/update_versions.py 18b1                     # beta
+  python scripts/update_versions.py 20261101 --dev-of 17.1   # dated dev build
+  python scripts/update_versions.py 17 --rev 1               # wrapper-only refresh
 
 Version scheme (documented in RELEASING.md):
-  stable  16.2      -> 16.2.REV   (npm patch = wrapper revision; Prince
+  stable  17        -> 17.0.REV   (npm patch = wrapper revision; Prince
                                    stable releases use two components)
-  beta    17b1      -> 17.0.0-beta.1
-  dev     20260630  -> 17.0.0-dev.20260630.REV  (with --dev-of 17)
+  beta    18b1      -> 18.0.0-beta.1
+  dev     20261101  -> 17.1.0-dev.20261101.REV  (with --dev-of 17.1)
 
 Dev builds and betas are published under the npm dist-tag `next`, so plain
-`npm install prince-pdf` keeps resolving the stable release.
+`npm install prince-pdf` keeps resolving the stable release. They sort
+before the release they lead to, so --dev-of must name a release that has
+not shipped yet (after 17.0.0, use --dev-of 17.1).
 """
 
 import argparse
@@ -81,11 +83,14 @@ def semver(prince_version, dev_of=None, rev=0):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("prince_version", help="e.g. 16.2, 17b1, or 20260630")
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("prince_version", help="e.g. 17, 18b1, or 20261101")
     parser.add_argument(
         "--dev-of",
-        help="the future release a dated build leads to, e.g. 17",
+        help="the unreleased version a dated build leads to, e.g. 17.1",
     )
     parser.add_argument(
         "--rev",

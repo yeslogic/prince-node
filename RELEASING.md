@@ -23,15 +23,15 @@ npm versions are semver; Prince versions map as:
 
 | Prince release | npm version |
 |---|---|
-| 16.2 (stable) | `16.2.0` |
-| wrapper-only refresh of 16.2 | `16.2.1`, `16.2.2`, … (patch = wrapper revision) |
-| 17b1 (beta) | `17.0.0-beta.1` |
-| 20260630 (dated dev build) | `17.0.0-dev.20260630.0` (with `--dev-of 17`) |
-| wrapper refresh of a dev build | `17.0.0-dev.20260630.1` |
+| 17 (stable) | `17.0.0` |
+| wrapper-only refresh of 17 | `17.0.1`, `17.0.2`, … (patch = wrapper revision) |
+| 18b1 (beta) | `18.0.0-beta.1` |
+| 20261101 (dated dev build) | `17.1.0-dev.20261101.0` (with `--dev-of 17.1`) |
+| wrapper refresh of a dev build | `17.1.0-dev.20261101.1` |
 
 The patch component is available as a wrapper revision counter because
 Prince stable releases use two components. If Prince ever ships a
-three-component release (e.g. 16.2.1), map it to the next free patch number
+three-component release (e.g. 17.0.1), map it to the next free patch number
 above the wrapper revisions already used and note the mapping here.
 
 Pre-releases (`-dev.*`, `-beta.*`) sort before the final release in semver
@@ -40,13 +40,28 @@ and are published under the npm **dist-tag `next`**, so plain
 `npm install prince-pdf@next` opts into pre-releases. This mirrors
 `pip install --pre` for the PyPI package.
 
+Pre-releases sort *before* the release they lead to
+(`17.0.0-dev.… < 17.0.0-beta.1 < 17.0.0`), so once a stable release
+ships, dated builds must target the next one: after 17.0.0, use
+`--dev-of 17.1` (→ `17.1.0-dev.YYYYMMDD.0`). A dev build mapped to an
+already-released version would install as older than `latest`.
+
+Publishing a stable release moves only `latest`; `next` keeps pointing
+at the last pre-release, which is now older than `latest`. After the
+stable release is published, point `next` at it until the next
+pre-release ships:
+
+```
+npm dist-tag add prince-pdf@17.0.0 next
+```
+
 ## Release routine
 
 1. `python scripts/update_versions.py <prince-version> [--dev-of N] [--rev N]`
    — downloads the artifacts, records checksums in `versions.json`, and
    syncs `version` + `optionalDependencies` in `package/package.json`.
 2. Review the diff, commit, push, and check CI is green.
-3. Tag `v<package-version>` (e.g. `v16.2.0` or `v17.0.0-dev.20260630.0`)
+3. Tag `v<package-version>` (e.g. `v17.0.0` or `v17.1.0-dev.20261101.0`)
    and push the tag. CI rebuilds, verifies, and publishes all seven
    packages — the six platform packages first, then the main package, with
    the dist-tag chosen from the version (`next` for pre-releases, `latest`

@@ -282,27 +282,9 @@ async function htmlToPdf(html, output = null, options = {}) {
 /**
  * Convert a Markdown document given as a string (or Buffer) to a PDF.
  *
- * Requires a bundled engine with Markdown support (Prince 17 or later,
- * including 17 pre-release builds). Otherwise identical to htmlToPdf().
+ * Requires Prince 17 or later. Otherwise identical to htmlToPdf().
  */
 async function markdownToPdf(markdown, output = null, options = {}) {
-  // The version guard only knows the bundled engine; with a separately
-  // installed Prince (executable option or PRINCE_PATH), the engine
-  // decides whether it supports Markdown.
-  if (!options.executable && !process.env.PRINCE_PATH) {
-    const engine = bundle().meta.prince_version;
-    // Dated pre-release builds (e.g. 20260630) trivially satisfy >= 17.
-    // An unrecognized version scheme skips the guard: the engine decides.
-    const m = /^\d+/.exec(engine);
-    if (m && parseInt(m[0], 10) < 17) {
-      throw new Error(
-        'Markdown input requires Prince 17 or later; this package bundles ' +
-        `Prince ${engine}. Install a 17 build with ` +
-        '`npm install prince-pdf@next`, or convert the Markdown to HTML ' +
-        'and use htmlToPdf().'
-      );
-    }
-  }
   return stringToPdf('markdown', markdown, output, options);
 }
 

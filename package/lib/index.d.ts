@@ -78,8 +78,7 @@ export function htmlToPdf(
 
 /**
  * Convert a Markdown document given as a string (or Buffer) to a PDF.
- * Requires a bundled Prince 17 or later (`npm install prince-pdf@next`
- * while 17 is in pre-release).
+ * Requires Prince 17 or later.
  */
 export function markdownToPdf(
   markdown: string | Buffer,

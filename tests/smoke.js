@@ -82,19 +82,9 @@ async function main() {
     assert(isPdf(buf), 'htmlToPdf output does not look like a PDF');
     console.log(`htmlToPdf (in-memory): ${buf.length} byte PDF`);
 
-    try {
-      const md = await prince.markdownToPdf('# Smoke test\n\nMarkdown *works*.\n');
-      assert(isPdf(md), 'markdownToPdf output does not look like a PDF');
-      console.log(`markdownToPdf: ${md.length} byte PDF`);
-    } catch (err) {
-      // Engines before Prince 17 have no Markdown support; the wrapper
-      // must say so instead of surfacing a misleading XML parse error.
-      assert(
-        err.message.includes('Prince 17'),
-        `unhelpful markdown error: ${err.message}`
-      );
-      console.log('markdownToPdf: no engine support, guarded correctly');
-    }
+    const md = await prince.markdownToPdf('# Smoke test\n\nMarkdown *works*.\n');
+    assert(isPdf(md), 'markdownToPdf output does not look like a PDF');
+    console.log(`markdownToPdf: ${md.length} byte PDF`);
 
     if (process.platform !== 'win32') {
       // A separately installed Prince, emulated by a launcher script of
