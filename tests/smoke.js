@@ -130,6 +130,28 @@ async function main() {
     );
     console.log('empty inputs rejected with TypeError');
 
+    // A file name starting with "-" must not be read as an option.
+    const tmp3 = fs.mkdtempSync(path.join(os.tmpdir(), 'prince-pdf-'));
+    const cwd = process.cwd();
+    try {
+      fs.writeFileSync(path.join(tmp3, '-dash.html'), HTML);
+      process.chdir(tmp3);
+      assert(isPdf(await prince.convert('-dash.html')), 'convert of -dash.html');
+    } finally {
+      process.chdir(cwd);
+      fs.rmSync(tmp3, { recursive: true, force: true });
+    }
+    console.log("input file names starting with '-': ok");
+
+    for (const bad of [
+      () => prince.convert('x.html', null, { args: '--javascript' }),
+      () => prince.htmlToPdf(HTML, null, { args: '--javascript' }),
+      () => prince.htmlToPdf(undefined),
+    ]) {
+      await assert.rejects(bad(), TypeError, 'bad argument type not rejected');
+    }
+    console.log('string args and non-text content rejected with TypeError');
+
     await assert.rejects(
       prince.convert('/nonexistent/input.html'),
       (err) => {

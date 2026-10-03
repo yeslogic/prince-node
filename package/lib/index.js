@@ -151,6 +151,25 @@ function parseStructuredLog(stderr) {
   return { messages, final };
 }
 
+function argsOf(options) {
+  const args = options.args || [];
+  // A plain string would be spread into one-character arguments.
+  if (typeof args === 'string') {
+    throw new TypeError(
+      "args must be an array of argument tokens, e.g. ['--javascript'], " +
+      'not a single string'
+    );
+  }
+  return args;
+}
+
+// The engine would read a leading "-" as an option (or "-" as stdin);
+// "./" keeps it a file name, and works with any Prince version.
+function inputPath(p) {
+  const s = String(p);
+  return s.startsWith('-') ? `.${path.sep}${s}` : s;
+}
+
 function _convert(cliArgs, output, stdin, opts) {
   return new Promise((resolve, reject) => {
     const argv = buildCommand(opts.executable, [
@@ -244,19 +263,22 @@ function _convert(cliArgs, output, stdin, opts) {
  */
 async function convert(inputs, output = null, options = {}) {
   const list = typeof inputs === 'string' ? [inputs] : Array.from(inputs);
-  const paths = list.map(String);
+  const paths = list.map(inputPath);
   if (!paths.length) {
     throw new TypeError('inputs must contain at least one path');
   }
-  return _convert([...(options.args || []), ...paths], output, null, options);
+  return _convert([...argsOf(options), ...paths], output, null, options);
 }
 
 /** Pipe a document string through the engine with an explicit format. */
 function stringToPdf(inputFormat, content, output, options) {
+  if (typeof content !== 'string' && !(content instanceof Uint8Array)) {
+    throw new TypeError('document content must be a string or Buffer');
+  }
   const data =
     typeof content === 'string' ? Buffer.from(content, 'utf8') : content;
   return _convert(
-    [`--input=${inputFormat}`, ...(options.args || []), '-'],
+    [`--input=${inputFormat}`, ...argsOf(options), '-'],
     output,
     data,
     options
